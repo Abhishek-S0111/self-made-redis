@@ -31,7 +31,7 @@ int main(){
         die("connect");
     }
 
-    char msg[] = "hello";
+    char msg[] = "Hello";
     write(fd, msg, strlen(msg));
 
     char rbuf[64] = {};
