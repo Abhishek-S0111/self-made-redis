@@ -25,15 +25,18 @@ static void do_something(int connfd){
         msg("read() error");
         return;
     }
-    printf("Client Says: %s\n", rbuf);
+    fprintf(stderr, "Client Says: %s\n", rbuf);
 
-    char wbuf[64] = "world";
+    char wbuf[] = "world";
     write(connfd, wbuf, strlen(wbuf));
 }
 
 int main(){
     //first, obtain a socket ID 
     int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if(fd < 0){
+        die("socket()");
+    }
     /*
         fd          :  file descriptor
         AF_INET     :  for IPv4
@@ -59,7 +62,7 @@ int main(){
     addr.sin_port = ntohs(1234);
     addr.sin_addr.s_addr = ntohl(0);
 
-    int rv = bind(fd, (const sockaddr *)&addr, sizeof(addr));
+    int rv = bind(fd, (const struct sockaddr *)&addr, sizeof(addr));
     if(rv){
         die("bind()");
     }
@@ -76,7 +79,7 @@ int main(){
         struct sockaddr_in client_addr = {};
         socklen_t socklen = sizeof(client_addr);
         int connfd = accept(fd, (struct sockaddr *)&client_addr, &socklen );
-        if(connfd > 0){
+        if(connfd < 0){
             continue; //error
         }
 
