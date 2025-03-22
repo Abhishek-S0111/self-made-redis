@@ -112,17 +112,35 @@ int main(){
         die("connect");
     }
 
-    char msg[] = "Hello";
-    write(fd, msg, strlen(msg));
-
-    char rbuf[64] = {};
-    ssize_t n = read(fd, rbuf, sizeof(rbuf) - 1);
-    if(n < 0){
-        die("read");
+    //multiple requests
+    int32_t err = query(fd, "hello1");
+    if(err){
+        goto L_DONE;
+    }
+    err = query(fd, "hello2");
+    if(err){
+        goto L_DONE;
+    }
+    err = query(fd, "hello3");
+    if(err){
+        goto L_DONE;
     }
 
-    printf("Server says: %s\n", rbuf);
+L_DONE:
     close(fd);
-
     return 0;
+
+    // char msg[] = "Hello";
+    // write(fd, msg, strlen(msg));
+
+    // char rbuf[64] = {};
+    // ssize_t n = read(fd, rbuf, sizeof(rbuf) - 1);
+    // if(n < 0){
+    //     die("read");
+    // }
+
+    // printf("Server says: %s\n", rbuf);
+    // close(fd);
+
+    // return 0;
 }
