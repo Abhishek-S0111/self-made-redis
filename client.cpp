@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
+#include <errno.h>  //errno comes from here (global var)
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -48,6 +48,52 @@ static int32_t write_all(int fd, const char *buf, size_t n){
 
     return 0;
 }
+
+const size_t k_max_msg = 4096;
+
+static int32_t query(int fd, const char* text){
+    uint32_t len = (uint32_t)strlen(text);
+    if( len > k_max_msg){
+        return -1;  //length of text cannot exceed limit
+    }
+
+    char wbuf[4 + k_max_msg];  //no +1 cox we dont wanna write the null symbol
+    memcpy(wbuf, &len, 4);  //assume it to be little endian
+    memcpy(&wbuf, text, len);
+    if(int32_t err = write_all(fd, wbuf, 4 + len)){
+        return err;
+    }
+
+    //4 bytes header
+    char rbuf[4 + k_max_msg + 1];  //extra +1 fo null terminator || EOL symbol
+    errno = 0;
+    int32_t err = read_full(fd, rbuf, 4);
+
+    if(err){
+        msg(errno == 0 ? "EOF" : "read() error");
+        return err;
+    }
+
+    memcpy(&len, rbuf, 4); //assume little endian
+    if(len > k_max_msg){
+        msg("Too Long!!");
+        return -1;
+    }
+
+    //reply body || handle replies
+    err = read_full(fd, &rbuf[4], len);
+    if(err){
+        msg("read() error");
+        return -1;
+    }
+
+    //do something || some task done by the client
+    printf("Server says: %.*s\n", len, &rbuf[4]);
+    return 0;
+
+}
+
+
 
 int main(){
     int fd = socket(AF_INET, SOCK_STREAM, 0);
