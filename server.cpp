@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -98,7 +99,7 @@ static int32_t one_request(int connfd){
     rbuf[4 + len] = '\0';
     printf("Client Says: %s\n", &rbuf[4]);
 
-    //reply to client message throuh the same protocol
+    //reply to client message through the same protocol
     const char reply[] = "world";
     char wbuf[4 + sizeof(reply)];
     len = (uint32_t)strlen(reply);
@@ -108,8 +109,6 @@ static int32_t one_request(int connfd){
 
     return write_all(connfd, wbuf, 4 + len);
 }
-
-
 
 int main(){
     //first, obtain a socket ID 
