@@ -1,0 +1,2 @@
+fd = file descriptor
+memcpy = copy N bytes from SRC to DEST
