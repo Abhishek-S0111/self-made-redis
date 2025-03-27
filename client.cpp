@@ -26,7 +26,7 @@ static int32_t read_full(int fd,char *buf, size_t n){
             return -1;  //prolly some unexpected error or EOF
         }
 
-        assert((ssize_t)rv <= n);
+        assert((size_t)rv <= n);
         n -= (size_t)rv;
         buf += rv;
     }
@@ -41,7 +41,7 @@ static int32_t write_all(int fd, const char *buf, size_t n){
             return -1;
         }
 
-        assert((ssize_t)rv <= n);
+        assert((size_t)rv <= n);
         n -= (size_t)rv;
         buf += rv;
     }
@@ -59,7 +59,7 @@ static int32_t query(int fd, const char* text){
 
     char wbuf[4 + k_max_msg];  //no +1 cox we dont wanna write the null symbol
     memcpy(wbuf, &len, 4);  //assume it to be little endian
-    memcpy(&wbuf, text, len);
+    memcpy(&wbuf[4], text, len);
     if(int32_t err = write_all(fd, wbuf, 4 + len)){
         return err;
     }
@@ -84,7 +84,7 @@ static int32_t query(int fd, const char* text){
     err = read_full(fd, &rbuf[4], len);
     if(err){
         msg("read() error");
-        return -1;
+        return err;
     }
 
     //do something || some task done by the client

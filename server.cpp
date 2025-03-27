@@ -8,6 +8,9 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
+#include <iostream>
+
+using namespace std;
 
 static void msg(const char *msg){
     fprintf(stderr, "%s\n", msg);
@@ -19,18 +22,20 @@ static void die(const char *msg){
     abort();
 }
 
-static void do_something(int connfd){
-    char rbuf[64] = {};
-    ssize_t n = read(connfd, rbuf, sizeof(rbuf) - 1);
-    if(n < 0){
-        msg("read() error");
-        return;
-    }
-    fprintf(stderr, "Client Says: %s\n", rbuf);
+const size_t k_max_msg = 4096;
 
-    char wbuf[] = "world";
-    write(connfd, wbuf, strlen(wbuf));
-}
+// static void do_something(int connfd){
+//     char rbuf[64] = {};
+//     ssize_t n = read(connfd, rbuf, sizeof(rbuf) - 1);
+//     if(n < 0){
+//         msg("read() error");
+//         return;
+//     }
+//     fprintf(stderr, "Client Says: %s\n", rbuf);
+
+//     char wbuf[] = "world";
+//     write(connfd, wbuf, strlen(wbuf));
+// }
 
 static int32_t read_full(int fd,char *buf, size_t n){
     while(n > 0){
@@ -39,7 +44,7 @@ static int32_t read_full(int fd,char *buf, size_t n){
             return -1;  //prolly some unexpected error or EOF
         }
 
-        assert((ssize_t)rv <= n);
+        assert((size_t)rv <= n);
         n -= (size_t)rv;
         buf += rv;
     }
@@ -54,7 +59,8 @@ static int32_t write_all(int fd, const char *buf, size_t n){
             return -1;
         }
 
-        assert((ssize_t)rv <= n);
+        //To the me in the future, if you read this , I'm warning you once again to always check the typecasts in every type of code you write. Now and in the future. That Is All. THANK YOU
+        assert((size_t)rv <= n);
         n -= (size_t)rv;
         buf += rv;
     }
@@ -62,28 +68,23 @@ static int32_t write_all(int fd, const char *buf, size_t n){
     return 0;
 }
 
-const size_t k_max_msg = 4096;
 
 static int32_t one_request(int connfd){
     //4 bytes header 
-    char rbuf[4 + k_max_msg + 1];
+    char rbuf[4 + k_max_msg ];
     errno = 0;
     int32_t err = read_full(connfd, rbuf, 4);
 
     if(err){
-        if(errno == 0){
-            msg("EOF");
-        }else{
-            msg("read() error");
-        }
-
+        msg(errno == 0 ? "EOF" : "read() error");
         return err;
     }
 
     uint32_t len = 0;
     memcpy(&len, rbuf, 4); //take assumption of little endian
     if(len > k_max_msg){
-        msg("Too Long");
+        msg("Meow");
+        //cout << (char)len << endl;
         return -1;
     }
 
@@ -96,8 +97,9 @@ static int32_t one_request(int connfd){
 
     //some functionality to check if working
     //eread client message
-    rbuf[4 + len] = '\0';
-    printf("Client Says: %s\n", &rbuf[4]);
+    //below line was removed as it was unnecessary
+    //rbuf[4 + len] = '\0';
+    fprintf(stderr,"Client Says: %.*s\n",len, &rbuf[4]);
 
     //reply to client message through the same protocol
     const char reply[] = "world";
@@ -141,7 +143,7 @@ int main(){
     addr.sin_port = ntohs(1234);
     addr.sin_addr.s_addr = ntohl(0);
 
-    int rv = bind(fd, (const struct sockaddr *)&addr, sizeof(addr));
+    int rv = bind(fd, (const sockaddr *)&addr, sizeof(addr));
     if(rv){
         die("bind()");
     }
