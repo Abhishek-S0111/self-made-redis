@@ -24,6 +24,9 @@ static void die(const char *msg){
 
 const size_t k_max_msg = 4096;
 
+
+//uneeded for second step
+
 // static void do_something(int connfd){
 //     char rbuf[64] = {};
 //     ssize_t n = read(connfd, rbuf, sizeof(rbuf) - 1);
